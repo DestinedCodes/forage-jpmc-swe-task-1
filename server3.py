@@ -41,7 +41,7 @@ import dateutil.parser
 
 REALTIME = True
 SIM_LENGTH = timedelta(days=365 * 5)
-MARKET_OPEN = datetime.today().replace(hour=0, minute=30, second=0)
+MARKET_OPEN = datetime.now().replace(hour=0, minute=30, second=0)
 
 # Market parms
 #       min  / max  / std
@@ -120,8 +120,7 @@ def clear_book(buy=None, sell=None):
     """
     while buy and sell:
         order, size, _ = buy[0]
-        new_book = clear_order(order, size, sell)
-        if new_book:
+        if new_book := clear_order(order, size, sell):
             sell = new_book[1]
             buy = buy[1:]
         else:
@@ -205,7 +204,7 @@ def get(req_handler, routes):
     """ Map a request to the appropriate route of a routes instance. """
     for name, handler in routes.__class__.__dict__.items():
         if hasattr(handler, "__route__"):
-            if None != re.search(handler.__route__, req_handler.path):
+            if re.search(handler.__route__, req_handler.path) != None:
                 req_handler.send_response(200)
                 req_handler.send_header('Content-Type', 'application/json')
                 req_handler.send_header('Access-Control-Allow-Origin', '*')
@@ -299,8 +298,8 @@ class App(object):
             self.__init__()
             t1, bids1, asks1 = next(self._current_book_1)
             t2, bids2, asks2 = next(self._current_book_2)
-        t = t1 if t1 > t2 else t2
-        print('Query received @ t%s' % t)
+        t = max(t1, t2)
+        print(f'Query received @ t{t}')
         return [{
             'id': x and x.get('id', None),
             'stock': 'ABC',
